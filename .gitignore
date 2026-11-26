@@ -1,0 +1,29 @@
+# Runtime state & credentials (never commit)
+profiles.json
+profiles.json.*
+oauth.json
+oauth.json.*
+metrics.json
+metrics.json.*
+latency.jsonl
+latency.jsonl.*
+gateway.log*
+gateway.pid
+ensure-gateway.log
+ensure-gateway.state
+launchd.*.log
+keychain-snapshot*
+cycle_override.json
+
+# Backups, reports & local tooling artifacts
+*.bak-*
+*.tmp
+*.DS_Store
+reports/
+desktop/bin/
+dist-oss/
+release-dist/
+.opencode/
+__pycache__/
+*.pyc
+*.pyo

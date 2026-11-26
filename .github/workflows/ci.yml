@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node --check desktop/dist/app.js
+
+  test-go:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: desktop/go.mod
+      - run: cd desktop && go test -v ./internal/agyp/...
+
+  test-py:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run sandboxed gateway hardening suite
+        run: |
+          tmp_home=$(mktemp -d)
+          AGYP_HOME="$tmp_home" AGYP_BIN="$PWD/bin/agyp" python3 tools/tests/agyp_gateway_hardening_test.py --only t8,t13,t26,t27,t28
+
+  build-desktop-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: desktop/go.mod
+      - run: cd desktop && go test -v ./... && go build -o bin/agyp-desktop .

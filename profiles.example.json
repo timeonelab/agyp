@@ -1,0 +1,9 @@
+{
+  "active_profile": "work",
+  "profiles": {
+    "work": {
+      "email": "work@example.com",
+      "refresh_token": "REPLACE_WITH_REFRESH_TOKEN"
+    }
+  }
+}

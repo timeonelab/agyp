@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate frontend JS
+        run: node --check desktop/dist/app.js
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: desktop/go.mod
+
+      - name: Run Go unit tests
+        run: cd desktop && go test -v ./...
+
+      - name: Package Universal macOS App
+        run: bash scripts/package-macos.sh --arch universal --version "${GITHUB_REF_NAME#v}" --out-dir release-dist --zip
+
+      - name: Verify ad-hoc signature
+        run: codesign --verify --deep --strict "release-dist/agyp Monitor.app"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            release-dist/agyp-Monitor-macos-universal.zip
+            release-dist/SHA256SUMS.txt
+          body: |
+            ### macOS Desktop Monitor (`agyp Monitor.app`)
+
+            - **Universal binary** (`arm64` + `x86_64`) for Apple Silicon & Intel Macs (macOS 12+).
+            - Unzip `agyp-Monitor-macos-universal.zip` and drag `agyp Monitor.app` into `/Applications`.
+            - Because release builds are ad-hoc signed without Apple Developer notarization, if macOS Gatekeeper blocks first launch, run:
+              ```bash
+              xattr -cr "/Applications/agyp Monitor.app"
+              ```
+            - Install CLI & launch scripts from source via `./scripts/install.sh` (runs `agyp`, `agyp live`, `agyp gui`, etc.).
+
+            ---
+
+            - **通用架构包**（支持 Apple Silicon + Intel，macOS 12+）。
+            - 解压 `agyp-Monitor-macos-universal.zip` 后将 `agyp Monitor.app` 拖入「应用程序（`/Applications`）」。
+            - 发行包仅使用本机 ad-hoc 签名（未经过 Apple 开发者公证），首次双击如遇系统拦截，在终端执行一次：
+              ```bash
+              xattr -cr "/Applications/agyp Monitor.app"
+              ```
+            - CLI 与配套守护脚本可通过仓库根目录 `./scripts/install.sh` 安装，之后即可使用 `agyp`、`agyp live` 及 `agyp gui`。

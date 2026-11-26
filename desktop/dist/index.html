@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" id="metaThemeColor" content="#ffffff">
+  <title>agyp 网关用量看板</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Bar with Integrated Global Tab Bar -->
+    <header class="top-nav">
+      <!-- Left: brand = gateway status + action menu, then main tabs -->
+      <div class="nav-left">
+        <div class="gateway-status-wrap" id="gatewayStatusWrap">
+          <button class="brand-badge" id="gatewayPill" title="网关操作" aria-haspopup="menu" aria-expanded="false">
+            <svg class="brand-bolt online" id="statusDot" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+              <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z" fill="currentColor" />
+            </svg>
+            <span class="brand-name">agyp</span>
+            <span class="brand-chevron">▾</span>
+          </button>
+          <div class="gateway-dropdown-menu" id="gatewayMenu" style="display:none;" role="menu">
+            <button class="gw-menu-item" id="menuRestartNormal">平滑重启 (防打断)</button>
+            <button class="gw-menu-item gw-menu-danger" id="menuRestartForce">强制重启 (--force)</button>
+            <div class="gw-menu-divider"></div>
+            <button class="gw-menu-item" id="menuStopDaemon">停止网关守护进程</button>
+            <button class="gw-menu-item" id="menuStartDaemon">启动网关守护进程</button>
+            <div class="gw-menu-divider"></div>
+            <button class="gw-menu-item" id="menuExportCsv">导出当前周期统计 (CSV)</button>
+          </div>
+        </div>
+        <nav class="top-tab-group" id="analyticsTabs">
+          <button class="tab-btn active" data-tab="overview">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            总览
+          </button>
+          <button class="tab-btn" data-tab="usage">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            用量分析
+          </button>
+          <button class="tab-btn" data-tab="models">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            模型分布
+          </button>
+        </nav>
+      </div>
+
+      <!-- Right: Global Theme Toggle -->
+      <div class="nav-right">
+        <button type="button" class="nav-icon-btn" id="themeToggleBtn" title="切换明/暗主题" aria-label="切换主题"></button>
+      </div>
+    </header>
+
+    <!-- Main Dual-Pane Dashboard Layout -->
+    <main class="dashboard-split-layout">
+      <!-- Left Column: Tab Views -->
+      <div class="left-pane-scroll" id="leftPane">
+        <!-- Left-pane unified status + period bar (visible on Overview & Models) -->
+        <div class="left-period-bar" id="leftPeriodBar">
+          <div class="header-meta">
+            <span class="live-indicator">●</span>
+            <span id="periodSubtitle">加载中...</span>
+            <span class="header-meta-sep">·</span>
+            <span id="inflightBadge">在途 0</span>
+          </div>
+          <nav class="time-range-group" id="timeRangeGroup">
+            <button class="range-btn active" data-days="1">今天</button>
+            <button class="range-btn" data-days="-1">昨天</button>
+            <button class="range-btn" data-days="7">7 天</button>
+            <button class="range-btn" data-days="30">30 天</button>
+            <button class="range-btn" data-days="90">90 天</button>
+            <button class="range-btn" data-days="0">全部</button>
+          </nav>
+        </div>
+
+        <!-- Tab 1: Overview -->
+        <div class="tab-pane active" id="paneOverview">
+          <!-- Daily KPIs: directly below period selector -->
+          <div class="kpi-strip">
+            <div class="kpi-stat" title="所选时间段内累计生成的 Output Tokens">
+              <span class="kpi-label"><svg class="kpi-icon text-blue" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5m-7 7l7-7 7 7"/></svg> 输出 Token</span>
+              <strong id="kpiOutputVal">-</strong>
+            </div>
+            <div class="kpi-stat" title="所选时间段内累计发送的 Input Tokens">
+              <span class="kpi-label"><svg class="kpi-icon text-purple" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14m7-7l-7 7-7-7"/></svg> 输入 Token</span>
+              <strong id="kpiInputVal">-</strong>
+            </div>
+            <div class="kpi-stat" title="所选时间段内发生的请求总次数">
+              <span class="kpi-label"><svg class="kpi-icon text-amber" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 请求总数</span>
+              <strong id="kpiReqVal">-</strong>
+            </div>
+            <div class="kpi-stat" title="平均吐字生成速度（不含首字等待，含思考 Token）">
+              <span class="kpi-label"><svg class="kpi-icon text-emerald" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> 吐字速度</span>
+              <strong id="kpiSpeedVal">-</strong>
+            </div>
+            <div class="kpi-stat" title="按公开 API 目录价估算（含缓存输入折扣与思考 Token）">
+              <span class="kpi-label"><svg class="kpi-icon text-orange" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> 等效价值</span>
+              <strong id="kpiCostVal">-</strong>
+            </div>
+            <div class="kpi-stat" id="kpiCacheHitCard" title="输入 Token 缓存命中率 (Prompt Cache Hit Rate)">
+              <span class="kpi-label"><svg class="kpi-icon text-cyan" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg> 缓存命中</span>
+              <strong id="kpiCacheHitVal">-</strong>
+            </div>
+          </div>
+
+          <!-- One card per account: weekly usage + 5h quota + reset + switch -->
+          <section class="pool-card">
+            <div class="section-title-row">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <h2 class="section-title">账号配额</h2>
+                <span class="pool-mode-pill" id="poolModeBadge"></span>
+                <button type="button" class="nav-icon-btn privacy-inline-btn active" id="privacyToggleBtn" title="隐私模式：隐藏账号邮箱（点击切换明文）" aria-label="隐私模式"></button>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-resume-all" id="btnResumeAllProfiles" style="display:none;" onclick="resumeAllAccounts()" title="取消所有暂停限制，恢复多账号自动容灾池">
+                  全部恢复
+                </button>
+                <button class="btn-add-profile" id="btnAddProfile" onclick="openAddProfileModal()" title="新增账号（浏览器 OAuth 登录 / 钥匙串导入 / Refresh Token）">
+                  + 添加账号
+                </button>
+              </div>
+            </div>
+            <div class="weekly-fleet-banner" id="weeklySummary"></div>
+            <div class="profile-cards-grid" id="profilePoolGrid"></div>
+          </section>
+
+          <!-- Error & Fault Breakdown Card -->
+          <section class="error-breakdown-card" id="errorBreakdownCard">
+            <div class="section-title-row">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <h2 class="section-title">异常与故障统计</h2>
+                <span class="error-total-badge" id="errorTotalBadge">0 异常</span>
+              </div>
+              <span class="section-tip">点击快速联动过滤日志</span>
+            </div>
+            <div class="error-items-grid" id="errorItemsGrid">
+              <div class="error-empty-state">当前周期内无异常报错，系统运行健康</div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- Tab 2: Usage analysis (trend first, then task ranking) -->
+        <div class="tab-pane" id="paneUsage">
+          <!-- One main chart, two views -->
+          <section class="analytics-card chart-section">
+            <div class="chart-section-head">
+              <h2 class="section-title">趋势</h2>
+              <div class="chart-view-toggle" id="chartViewToggle">
+                <button class="chart-view-btn active" data-view="tokens">Token / 价值</button>
+                <button class="chart-view-btn" data-view="quota">周配额 %</button>
+              </div>
+            </div>
+            <div class="chart-view-pane active" id="chartViewTokens">
+              <div id="dailyChartBox"></div>
+            </div>
+            <div class="chart-view-pane" id="chartViewQuota">
+              <div id="weeklyCurveBox"></div>
+            </div>
+          </section>
+
+          <section class="analytics-card usage-section">
+            <div class="usage-section-head">
+              <h2 class="section-title">用量分析</h2>
+              <div class="usage-range-toggle" id="usageRangeToggle">
+                <button class="usage-range-btn active" data-range="day">每日</button>
+                <button class="usage-range-btn" data-range="week">近 7 天</button>
+              </div>
+            </div>
+            <div class="sessions-container" id="relaySessionsBox">
+              <div class="loading-placeholder">加载中...</div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Tab 3: Model Breakdown -->
+        <div class="tab-pane" id="paneModels">
+          <!-- 1. Model Consumption & Speed Cards -->
+          <section class="analytics-card">
+            <div class="section-title-row" style="margin-bottom:12px;">
+              <h2 class="section-title">模型消耗与生成速度</h2>
+              <span class="section-tip">各模型请求量、生成速度及健康状态</span>
+            </div>
+            <div class="model-cards-container" id="modelList">
+              <div class="loading-placeholder">正在加载模型明细...</div>
+            </div>
+          </section>
+
+          <!-- 2. Dedicated Model Error Group (Error Group) -->
+          <section class="analytics-card model-error-group-card" id="modelErrorGroupCard">
+            <div class="section-title-row" style="margin-bottom:12px;">
+              <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+                <h2 class="section-title">模型异常统计 (Error Group)</h2>
+                <span class="error-total-badge" id="modelErrorGroupBadge">0 异常</span>
+              </div>
+              <span class="section-tip">点击卡片联动筛选日志</span>
+            </div>
+
+            <!-- Error Group Summary Bar -->
+            <div class="model-error-summary-bar" id="modelErrorSummaryBar">
+              <!-- Rendered by JS -->
+            </div>
+
+            <!-- Error Breakdown Items Grid -->
+            <div class="model-error-items-grid" id="modelErrorItemsGrid">
+              <!-- Rendered by JS -->
+            </div>
+          </section>
+        </div>
+
+      </div><!-- /left-pane-scroll -->
+
+      <!-- Draggable Splitter Divider -->
+      <div class="pane-resizer" id="paneResizer" title="左右拖动调整两栏宽度">
+        <div class="resizer-handle"></div>
+      </div>
+
+      <!-- Right Column: Live Request Stream Console -->
+      <div class="right-pane-container" id="rightPane">
+        <!-- Live Request Stream -->
+        <section class="live-stream-card" id="liveStreamCard">
+          <div class="section-title-row">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <h2 class="section-title">实时请求流水</h2>
+              <span class="refresh-pill">
+                <span class="pulse-ring"></span>
+                实时监控
+              </span>
+            </div>
+
+            <div class="stream-header-actions">
+              <div class="stream-action-group">
+                <label class="filter-label" style="margin-right:2px;">容量:</label>
+                <select id="logLimitSelect" class="filter-select" title="设置每次拉取并缓存的日志条数">
+                  <option value="100" selected>100 条</option>
+                  <option value="300">300 条</option>
+                  <option value="500">500 条</option>
+                  <option value="1000">1000 条</option>
+                </select>
+              </div>
+
+              <button id="logPauseToggleBtn" class="stream-action-btn" title="点击暂停自动滚动刷新，便于仔细排查某段流水">
+                <span id="logPauseIcon">⏸</span> <span id="logPauseText">滚动中</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Mini Stream Performance & Health Bar -->
+          <div class="stream-mini-kpi-bar" id="streamMiniKpiBar">
+            <!-- Rendered by JS -->
+          </div>
+
+          <div class="stream-toolbar-compact">
+            <div class="stream-quick-bar">
+              <div class="quick-filter-pills" id="streamQuickFilters">
+                <button type="button" class="quick-pill-btn active" data-quick="all">全部</button>
+                <button type="button" class="quick-pill-btn" data-quick="chat" title="仅显示真实用户对话（自动排除系统内部、agent_monitoring、checkpoint 等后台请求）">仅对话</button>
+                <button type="button" class="quick-pill-btn" data-quick="gen">仅推理</button>
+                <button type="button" class="quick-pill-btn" data-quick="err">仅异常</button>
+              </div>
+              <div class="filter-search-box" style="flex:1; min-width:150px;">
+                <input type="text" id="logSearchInput" class="filter-input" placeholder="搜索会话 / 模型 / 账号..." />
+              </div>
+              <button type="button" id="btnToggleMoreFilters" class="btn-more-filters" title="展开/收起会话、模型、接口与账号高级筛选">
+                筛选 <span id="moreFiltersCount" class="filter-count-badge" style="display:none;"></span>▾
+              </button>
+              <button type="button" id="logResetFiltersBtn" class="btn-filter-reset" style="display:none;" title="重置全部筛选条件">重置</button>
+              <div class="stream-stats-badge" id="streamFilteredCount">
+                加载中...
+              </div>
+            </div>
+
+            <div class="stream-active-chips" id="streamActiveFilterChips" style="display:none;"></div>
+
+            <div class="stream-advanced-filters" id="streamAdvancedFilters" style="display:none;">
+              <div class="filter-item">
+                <label class="filter-label">会话:</label>
+                <select id="logFilterSession" class="filter-select">
+                  <option value="ALL">全部会话</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">模型:</label>
+                <select id="logFilterModel" class="filter-select">
+                  <option value="ALL">全部模型</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">接口:</label>
+                <select id="logFilterPath" class="filter-select">
+                  <option value="ALL">全部接口</option>
+                  <option value="streamGenerateContent">streamGenerate (推理)</option>
+                  <option value="fetchAvailableModels">fetchModels (探活)</option>
+                  <option value="loadCodeAssist">loadCode (上下文)</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">账号:</label>
+                <select id="logFilterProfile" class="filter-select">
+                  <option value="ALL">全部账号</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">状态:</label>
+                <select id="logFilterStatus" class="filter-select">
+                  <option value="ALL">全部状态</option>
+                  <option value="OK">仅 200 成功</option>
+                  <option value="ERR">全部异常/失败</option>
+                  <option value="503">仅 503 容量不足</option>
+                  <option value="429">仅 429 配额打满</option>
+                  <option value="502">仅 502 网关超时</option>
+                  <option value="CACHE">仅缓存命中 (HIT)</option>
+                  <option value="CACHE_DROP">仅异常掉缓存</option>
+                  <option value="RETRY">仅容灾救回 (Retry)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-container" id="streamTableContainer">
+            <table class="stream-table">
+              <thead>
+                <tr>
+                  <th>时间</th>
+                  <th>状态</th>
+                  <th>会话 Session</th>
+                  <th>模型</th>
+                  <th>接口</th>
+                  <th>首字 (TTFT)</th>
+                  <th title="纯吐字速度：(输出+思考) Token ÷ 流式生成耗时（不含首字等待）">吞吐</th>
+                  <th>Token (出/入)</th>
+                  <th title="上下文 Prompt 缓存命中率 (cachedTokens ÷ inputTokens)">缓存命中</th>
+                  <th>连接</th>
+                  <th>账号</th>
+                </tr>
+              </thead>
+              <tbody id="streamTableBody">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div><!-- /right-pane-container -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <span class="refresh-indicator" id="refreshBtn" title="点击立即刷新">
+          更新于 <span id="lastUpdatedTime">刚刚</span>
+        </span>
+        <span class="divider">|</span>
+        <span class="footer-info" id="footerGatewayInfo">网关连接中...</span>
+      </div>
+      <div class="footer-right">
+        <span>仅保存本地统计与汇总，不含任何请求内容</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Request Inspection & Session Insight Drawer Modal -->
+  <div class="modal-overlay" id="inspectOverlay" style="display:none;">
+    <div class="inspect-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title-col">
+          <div class="drawer-title-row">
+            <span class="drawer-badge" id="drawerStatusBadge">200 OK</span>
+            <h3 class="drawer-title" id="drawerTitle">请求现场诊断与取证</h3>
+          </div>
+          <div class="drawer-subtitle" id="drawerSubtitle"></div>
+        </div>
+        <div class="drawer-header-right">
+          <div class="drawer-header-actions" id="drawerHeaderActions"></div>
+          <button class="drawer-close-btn" id="drawerCloseBtn">✕</button>
+        </div>
+      </div>
+
+      <div class="drawer-body">
+        <div id="inspectRequestSection" style="display:none;"></div>
+        <div id="inspectSessionSection" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Profile Modal -->
+  <div class="modal-overlay modal-center" id="addProfileOverlay" style="display:none;">
+    <div class="inspect-drawer add-profile-dialog">
+      <div class="drawer-header">
+        <div class="drawer-title-row">
+          <h3 class="drawer-title">添加 Google 账号</h3>
+        </div>
+        <button class="drawer-close-btn" onclick="closeAddProfileModal()">✕</button>
+      </div>
+      <div class="drawer-body">
+        <div class="add-mode-tabs" id="addModeTabs">
+          <button type="button" class="add-mode-btn active" data-mode="oauth" onclick="switchAddProfileMode('oauth')">浏览器 OAuth</button>
+          <button type="button" class="add-mode-btn" data-mode="keychain" onclick="switchAddProfileMode('keychain')">钥匙串导入</button>
+          <button type="button" class="add-mode-btn" data-mode="token" onclick="switchAddProfileMode('token')">Refresh Token</button>
+        </div>
+
+        <p class="add-mode-hint" id="addProfileModeHint"></p>
+
+        <div class="add-form-group">
+          <label for="addProfileNameInput">账号别名 (Profile Name)</label>
+          <input type="text" id="addProfileNameInput" class="add-form-input" placeholder="例如: work / personal (字母或数字开头)" />
+        </div>
+
+        <div id="addProfileTokenFields" class="add-token-fields" style="display:none;">
+          <div class="add-form-group">
+            <label for="addProfileRefreshTokenInput">Refresh Token</label>
+            <textarea id="addProfileRefreshTokenInput" class="add-form-input" rows="3" placeholder="粘贴 Google OAuth refresh_token"></textarea>
+          </div>
+          <div class="add-form-group">
+            <label for="addProfileEmailInput">关联邮箱 (可选，未填将自动拉取)</label>
+            <input type="email" id="addProfileEmailInput" class="add-form-input" placeholder="name@example.com" />
+          </div>
+        </div>
+
+        <div id="addProfileFeedback" class="add-form-feedback" style="display:none;"></div>
+
+        <div class="add-form-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeAddProfileModal()">取消</button>
+          <button type="button" class="btn btn-primary" id="btnSubmitAddProfile" onclick="submitAddProfile()">确认添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Built-in Confirm / Prompt Dialog -->
+  <div class="modal-overlay modal-center" id="agypDialogOverlay" style="display:none;">
+    <div class="inspect-drawer agyp-dialog-box">
+      <div class="drawer-header">
+        <div class="drawer-title-row">
+          <h3 class="drawer-title" id="agypDialogTitle">确认操作</h3>
+        </div>
+        <button class="drawer-close-btn" id="agypDialogClose">✕</button>
+      </div>
+      <div class="drawer-body">
+        <p class="agyp-dialog-msg" id="agypDialogMessage"></p>
+        <input type="text" class="add-form-input" id="agypDialogInput" style="display:none; margin-bottom:14px;" />
+        <div class="add-form-actions">
+          <button type="button" class="btn btn-secondary" id="agypDialogCancel">取消</button>
+          <button type="button" class="btn btn-primary" id="agypDialogConfirm">确认</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

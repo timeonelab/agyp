@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>agyp 菜单栏看板</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --bg-subtle: #f8fafc;
+      --bg-card: #ffffff;
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --primary: #2563eb;
+      --emerald: #059669;
+      --warn: #d97706;
+      --danger: #dc2626;
+      --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "PingFang SC", sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1015;
+        --bg-subtle: #1c202a;
+        --bg-card: #15181f;
+        --border: rgba(255, 255, 255, 0.09);
+        --border-subtle: rgba(255, 255, 255, 0.055);
+        --text: #f3f4f6;
+        --text-muted: #9ca3af;
+        --text-light: #6b7280;
+        --primary: #60a5fa;
+        --emerald: #34d399;
+        --warn: #fbbf24;
+        --danger: #f87171;
+      }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 11px;
+      line-height: 1.35;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      overflow-y: auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Bar */
+    .mb-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 11px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      flex-shrink: 0;
+    }
+
+    .mb-brand-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mb-logo-bolt {
+      color: #3b82f6;
+      display: flex;
+      align-items: center;
+    }
+
+    .mb-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .mb-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 8.5px;
+      font-weight: 600;
+      padding: 1.5px 5px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-status-pill {
+        background: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+      }
+    }
+
+    .mb-status-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 4px #10b981;
+    }
+
+    .mb-speed-badge {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #2563eb;
+      background: #eff6ff;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-speed-badge {
+        background: rgba(59, 130, 246, 0.18);
+        color: #93c5fd;
+      }
+    }
+
+    .mb-head-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .mb-icon-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      border-radius: 5px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 10px;
+      transition: all 0.15s ease;
+    }
+
+    .mb-icon-btn:hover {
+      background: var(--bg-subtle);
+      color: var(--text);
+      border-color: #cbd5e1;
+    }
+
+    /* KPI Mini Strip */
+    .mb-kpi-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      padding: 6px 11px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .mb-kpi-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .mb-kpi-lbl {
+      font-size: 8.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      letter-spacing: -0.2px;
+    }
+
+    .mb-kpi-val {
+      font-size: 11px;
+      font-weight: 700;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Accounts Scroll Section */
+    .mb-accounts-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .mb-acc-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      transition: all 0.15s ease;
+    }
+
+    .mb-acc-card.active {
+      border-color: #3b82f6;
+      background: linear-gradient(180deg, rgba(239, 246, 255, 0.7) 0%, var(--bg-card) 100%);
+      box-shadow: 0 0 0 1px #3b82f6, 0 2px 6px rgba(59, 130, 246, 0.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-acc-card.active {
+        background: linear-gradient(180deg, rgba(30, 58, 138, 0.22) 0%, var(--bg-card) 100%);
+      }
+    }
+
+    .mb-acc-card.paused {
+      opacity: 0.72;
+      border-style: dashed;
+      background: var(--bg-subtle);
+    }
+
+    .mb-tag-paused {
+      font-size: 8.5px;
+      font-weight: 600;
+      color: #b45309;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-tag-paused {
+        background: rgba(245, 158, 11, 0.16);
+        border-color: rgba(245, 158, 11, 0.3);
+        color: #fbbf24;
+      }
+    }
+
+    .mb-tier-tag {
+      font-size: 8.5px;
+      font-weight: 600;
+      padding: 1px 4.5px;
+      border-radius: 4px;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .mb-tier-tag.ultra {
+      background: #f5f3ff;
+      color: #6d28d9;
+      border: 1px solid #ddd6fe;
+    }
+
+    .mb-tier-tag.pro {
+      background: #f0f9ff;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+
+    .mb-tier-tag.plus {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .mb-tier-tag.free {
+      background: var(--bg-subtle);
+      color: var(--text-light);
+      border: 1px solid var(--border-subtle);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-tier-tag.ultra {
+        background: rgba(139, 92, 246, 0.16);
+        color: #c4b5fd;
+        border-color: rgba(139, 92, 246, 0.3);
+      }
+      .mb-tier-tag.pro {
+        background: rgba(14, 165, 233, 0.14);
+        color: #7dd3fc;
+        border-color: rgba(56, 189, 248, 0.28);
+      }
+      .mb-tier-tag.free {
+        background: #1e293b;
+        color: #94a3b8;
+        border-color: #334155;
+      }
+    }
+
+    .mb-acc-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .mb-btn-mini {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 5.5px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .mb-btn-mini.pause:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #b45309;
+    }
+
+    .mb-btn-mini.only:hover {
+      background: #f5f3ff;
+      border-color: #8b5cf6;
+      color: #6d28d9;
+    }
+
+    .mb-btn-mini.resume {
+      background: #ecfdf5;
+      border-color: rgba(16, 185, 129, 0.35);
+      color: #059669;
+    }
+
+    .mb-pool-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      font-size: 9.5px;
+      font-weight: 600;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-pool-banner {
+        background: rgba(245, 158, 11, 0.15);
+        border-color: rgba(245, 158, 11, 0.3);
+        color: #fbbf24;
+      }
+    }
+
+    .mb-acc-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mb-acc-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .mb-acc-name {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+
+    .mb-tag-active {
+      font-size: 8.5px;
+      font-weight: 600;
+      color: #1d4ed8;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      padding: 1px 5px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .mb-tag-active .dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #2563eb;
+    }
+
+    .mb-tag-standby {
+      font-size: 8.5px;
+      color: var(--text-muted);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-subtle);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-tag-active {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        color: #93c5fd;
+      }
+      .mb-tag-active .dot {
+        background: #60a5fa;
+      }
+    }
+
+    .mb-btn-switch {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 2.5px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+    }
+
+    .mb-btn-switch:hover {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #2563eb;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-btn-switch:hover {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: #3b82f6;
+        color: #93c5fd;
+      }
+    }
+
+    .mb-current-label {
+      font-size: 9.5px;
+      color: #059669;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 4px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-current-label {
+        color: #34d399;
+      }
+    }
+
+    /* Quota Rows */
+    .mb-quota-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mb-q-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: var(--bg-subtle);
+      padding: 4px 7px;
+      border-radius: 5px;
+    }
+
+    .mb-q-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 9.5px;
+    }
+
+    .mb-q-title {
+      display: flex;
+      align-items: center;
+      gap: 3.5px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .mb-q-pct {
+      font-family: ui-monospace, monospace;
+      font-weight: 700;
+      font-size: 9.5px;
+    }
+
+    .mb-q-pct.emerald { color: var(--emerald); }
+    .mb-q-pct.warn { color: var(--warn); }
+    .mb-q-pct.danger { color: var(--danger); }
+
+    .mb-track {
+      height: 3px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mb-track { background: #263248; }
+    }
+
+    .mb-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      transition: width 0.3s ease;
+    }
+
+    .mb-fill.warn { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+    .mb-fill.danger { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
+
+    .mb-q-sub {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 8.5px;
+      color: var(--text-muted);
+      font-family: ui-monospace, monospace;
+    }
+
+    /* Mini Calendar Badge */
+    .mini-cal-badge {
+      width: 13px;
+      height: 14px;
+      border-radius: 2.5px;
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      display: inline-flex;
+      flex-direction: column;
+      overflow: hidden;
+      vertical-align: middle;
+      flex-shrink: 0;
+      background: var(--bg-card);
+    }
+
+    .mini-cal-badge .cal-top {
+      background: #ef4444;
+      color: #ffffff;
+      font-size: 6px;
+      font-weight: 700;
+      height: 5px;
+      line-height: 5px;
+      text-align: center;
+      letter-spacing: -0.5px;
+    }
+
+    .mini-cal-badge .cal-num {
+      background: var(--bg-card);
+      color: var(--text);
+      font-size: 7.5px;
+      font-weight: 800;
+      font-family: ui-monospace, monospace;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .mini-cal-badge .cal-top { background: #dc2626; }
+      .mini-cal-badge .cal-num { background: #1e293b; color: #f8fafc; }
+    }
+
+    /* Footer */
+    .mb-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 6px;
+    }
+
+    .mb-btn-foot {
+      flex: 1;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 9.5px;
+      font-weight: 600;
+      padding: 4px 6px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+    }
+
+    .mb-btn-foot:hover {
+      background: #eff6ff;
+      border-color: #3b82f6;
+      color: #2563eb;
+    }
+
+    .mb-btn-foot.danger:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+      color: #dc2626;
+    }
+
+    /* Floating Toast */
+    .mb-toast {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(15px);
+      background: rgba(15, 23, 42, 0.92);
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 9.5px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.2s ease;
+      z-index: 100;
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+    }
+
+    .mb-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="mb-header">
+    <div class="mb-brand-group">
+      <span class="mb-logo-bolt">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+          <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z"/>
+        </svg>
+      </span>
+      <span class="mb-title">agyp 网关</span>
+      <span class="mb-status-pill">
+        <span class="mb-status-dot"></span>
+        <span id="txtGatewayOnline">在线</span>
+      </span>
+      <span class="mb-speed-badge" id="txtLiveSpeed">0.0 t/s</span>
+    </div>
+    <div class="mb-head-actions">
+      <button class="mb-icon-btn" id="btnRefresh" title="刷新数据">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+      </button>
+      <button class="mb-icon-btn" id="btnOpenMain" title="打开全量监控大盘">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI Mini Bar -->
+  <section class="mb-kpi-bar">
+    <div class="mb-kpi-item">
+      <span class="mb-kpi-lbl">输出 Token</span>
+      <strong class="mb-kpi-val" id="valOutTokens">-</strong>
+    </div>
+    <div class="mb-kpi-item">
+      <span class="mb-kpi-lbl">输入 Token</span>
+      <strong class="mb-kpi-val" id="valInTokens">-</strong>
+    </div>
+    <div class="mb-kpi-item">
+      <span class="mb-kpi-lbl">请求次数</span>
+      <strong class="mb-kpi-val" id="valRequests">-</strong>
+    </div>
+    <div class="mb-kpi-item">
+      <span class="mb-kpi-lbl">缓存命中</span>
+      <strong class="mb-kpi-val" id="valCacheHit">-</strong>
+    </div>
+  </section>
+
+  <!-- Accounts List -->
+  <main class="mb-accounts-scroll" id="accountsList">
+    <div style="padding:15px; text-align:center; color:var(--text-muted); font-size:10px;">正在加载账号与配额...</div>
+  </main>
+
+  <!-- Footer Actions -->
+  <footer class="mb-footer">
+    <button class="mb-btn-foot" id="btnFootOpenMain">
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+      </svg>
+      <span>完整大盘</span>
+    </button>
+    <button class="mb-btn-foot" id="btnFootRestart">
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+      </svg>
+      <span>平滑重启</span>
+    </button>
+    <button class="mb-btn-foot danger" id="btnFootQuit">
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/>
+      </svg>
+      <span>退出</span>
+    </button>
+  </footer>
+
+  <div class="mb-toast" id="mbToast"></div>
+
+  <script>
+    // Safe MyGo IPC wrapper
+    async function callMyGo(method, ...args) {
+      if (window.mygo && typeof window.mygo.call === 'function') {
+        return await window.mygo.call(method, ...args);
+      }
+      return null;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('mbToast');
+      if (!t) return;
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function formatTokens(n) {
+      if (!n || isNaN(n)) return '0';
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+      if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return String(n);
+    }
+
+    function formatTimeCountdown(targetIso, displayStr) {
+      const iso = targetIso || (displayStr && displayStr.includes('T') ? displayStr : null);
+      if (iso) {
+        const d = new Date(iso);
+        if (!isNaN(d.getTime())) {
+          const diffMs = d.getTime() - Date.now();
+          if (diffMs <= 0) return '已满额';
+          const diffMins = Math.floor(diffMs / 60000);
+          if (diffMins < 60) return `${Math.max(1, diffMins)}分后`;
+          const diffHrs = Math.floor(diffMins / 60);
+          const remMins = diffMins % 60;
+          if (diffHrs < 24) return remMins > 0 ? `${diffHrs}时${remMins}分` : `${diffHrs}小时`;
+          const diffDays = Math.floor(diffHrs / 24);
+          const remHrs = diffHrs % 24;
+          return remHrs > 0 ? `${diffDays}天${remHrs}时` : `${diffDays}天`;
+        }
+      }
+      return '已满额';
+    }
+
+    function parseResetWeeklyDate(rawIso, displayStr) {
+      const iso = rawIso || (displayStr && displayStr.includes('T') ? displayStr : null);
+      if (iso) {
+        const d = new Date(iso);
+        if (!isNaN(d.getTime())) {
+          const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+          const weekdaysShort = ['日', '一', '二', '三', '四', '五', '六'];
+          const day = d.getDate();
+          const month = d.getMonth() + 1;
+          return {
+            dayNum: String(day),
+            weekdayShort: weekdaysShort[d.getDay()] || '三',
+            label: `${month}月${day}日 (${weekdays[d.getDay()] || '周三'})`,
+            shortLabel: `${month}-${day}`,
+          };
+        }
+      }
+      return { dayNum: '--', weekdayShort: '-', label: '待同步', shortLabel: '待同步' };
+    }
+
+    async function loadData() {
+      try {
+        const [stats, diag] = await Promise.all([
+          callMyGo('GatewayService.GetStats', 1),
+          callMyGo('GatewayService.GetLiveDiag')
+        ]);
+
+        if (diag) {
+          const speedEl = document.getElementById('txtLiveSpeed');
+          if (speedEl) {
+            speedEl.textContent = (diag.recentSpeed > 0 ? diag.recentSpeed.toFixed(1) : '0.0') + ' t/s';
+          }
+        }
+
+        if (stats) {
+          const s = stats.summary || {};
+          document.getElementById('valOutTokens').textContent = formatTokens(s.outputTokens || 0);
+          document.getElementById('valInTokens').textContent = formatTokens(s.inputTokens || 0);
+          document.getElementById('valRequests').textContent = String(s.requests || 0);
+          const hitRate = s.cacheHitRate != null ? s.cacheHitRate.toFixed(1) + '%' : '-';
+          document.getElementById('valCacheHit').textContent = hitRate;
+
+          renderAccounts(stats.profiles || [], stats.activeProfile);
+        }
+      } catch (e) {
+        console.error('loadData error:', e);
+      }
+    }
+
+    function renderAccounts(profiles, activeProfile) {
+      const container = document.getElementById('accountsList');
+      if (!container) return;
+
+      const enabledCount = profiles.filter(x => !x.paused).length;
+      const pausedCount = profiles.length - enabledCount;
+      let html = '';
+
+      if (pausedCount > 0) {
+        const modeText = enabledCount === 1
+          ? `单账号锁定: ${activeProfile}`
+          : `已暂停 ${pausedCount} 个账号`;
+        html += `
+          <div class="mb-pool-banner">
+            <span>${modeText}</span>
+            <button class="mb-btn-mini resume" onclick="resumeAllAccounts()">全部恢复</button>
+          </div>
+        `;
+      }
+
+      profiles.forEach(p => {
+        const isPaused = Boolean(p.paused);
+        const isAct = p.name === activeProfile && !isPaused;
+        const isSoleEnabled = !isPaused && enabledCount === 1 && pausedCount > 0;
+        const g5hColor = p.gemini5h < 20 ? 'danger' : (p.gemini5h < 50 ? 'warn' : 'emerald');
+        const gWkColor = p.geminiWeekly < 20 ? 'danger' : (p.geminiWeekly < 50 ? 'warn' : 'emerald');
+
+        const reset5hCountdown = formatTimeCountdown(p.reset5hRaw, p.reset5h);
+        const resetWkCountdown = formatTimeCountdown(p.resetWeeklyRaw, p.resetWeekly);
+        const wkDateInfo = parseResetWeeklyDate(p.resetWeeklyRaw, p.resetWeekly);
+
+        let tagHtml = '';
+        if (isPaused) {
+          tagHtml = '<span class="mb-tag-paused">暂停</span>';
+        } else if (isAct && isSoleEnabled) {
+          tagHtml = '<span class="mb-tag-active"><span class="dot"></span>锁定</span>';
+        }
+
+        let actionsHtml = '';
+        if (isPaused) {
+          actionsHtml += `<button class="mb-btn-mini resume" onclick="togglePauseAccount('${p.name}', false)">恢复</button>`;
+          actionsHtml += `<button class="mb-btn-switch" onclick="switchAccount('${p.name}')">切换</button>`;
+        } else {
+          if (!isSoleEnabled && profiles.length > 1) {
+            actionsHtml += `<button class="mb-btn-mini only" onclick="onlyAccount('${p.name}')" title="只用此账号">只用</button>`;
+          }
+          if (enabledCount > 1) {
+            actionsHtml += `<button class="mb-btn-mini pause" onclick="togglePauseAccount('${p.name}', true)" title="暂停此账号">暂停</button>`;
+          }
+          actionsHtml += !isAct
+            ? `<button class="mb-btn-switch" onclick="switchAccount('${p.name}')">切换</button>`
+            : `<span class="mb-current-label">
+                 <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                 ${isSoleEnabled ? '独占' : '当前'}
+               </span>`;
+        }
+
+        const tierRaw = p.tier || '';
+        const tierLower = tierRaw.toLowerCase();
+        const tierCls = tierLower === 'ultra' ? 'ultra' : (tierLower === 'pro' ? 'pro' : (tierLower === 'plus' ? 'plus' : 'free'));
+        const tierHtml = tierRaw
+          ? `<span class="mb-tier-tag ${tierCls}" title="${p.tierName || tierRaw}">${tierRaw}</span>`
+          : '';
+
+        html += `
+          <div class="mb-acc-card ${isAct ? 'active' : ''} ${isPaused ? 'paused' : ''}">
+            <div class="mb-acc-head">
+              <div class="mb-acc-left">
+                <span class="mb-acc-name">${p.name}</span>
+                ${tierHtml}
+                ${tagHtml}
+              </div>
+              <div class="mb-acc-actions">
+                ${actionsHtml}
+              </div>
+            </div>
+
+            <div class="mb-quota-grid">
+              <!-- 5h Quota -->
+              <div class="mb-q-row">
+                <div class="mb-q-top">
+                  <span class="mb-q-title">5h 滚动</span>
+                  <span class="mb-q-pct ${g5hColor}">余 ${p.gemini5h}%</span>
+                </div>
+                <div class="mb-track">
+                  <div class="mb-fill ${g5hColor}" style="width: ${p.gemini5h}%;"></div>
+                </div>
+                <div class="mb-q-sub">
+                  <span>${p.gemini5h >= 100 ? '配额充沛' : '已用 ' + (100 - p.gemini5h).toFixed(0) + '%'}</span>
+                  <span>${reset5hCountdown}</span>
+                </div>
+              </div>
+
+              <!-- Weekly Quota (No Claude, Dynamic Expiration Date) -->
+              <div class="mb-q-row">
+                <div class="mb-q-top">
+                  <span class="mb-q-title">
+                    <span class="mini-cal-badge" title="到期重置日期: ${wkDateInfo.label}">
+                      <span class="cal-top">${wkDateInfo.weekdayShort}</span>
+                      <span class="cal-num">${wkDateInfo.dayNum}</span>
+                    </span>
+                    <span>周配额 (${wkDateInfo.shortLabel}到期)</span>
+                  </span>
+                  <span class="mb-q-pct ${gWkColor}">余 ${p.geminiWeekly}%</span>
+                </div>
+                <div class="mb-track">
+                  <div class="mb-fill ${gWkColor}" style="width: ${p.geminiWeekly}%;"></div>
+                </div>
+                <div class="mb-q-sub">
+                  <span>已用 ${(100 - p.geminiWeekly).toFixed(1)}%</span>
+                  <span>${resetWkCountdown}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    window.switchAccount = async function(name) {
+      try {
+        showToast(`正在热切换至 ${name}...`);
+        await callMyGo('GatewayService.SwitchProfile', name);
+        showToast(`已成功热切换至 ${name}`);
+        setTimeout(loadData, 200);
+      } catch (e) {
+        showToast('切换失败: ' + (e.message || e));
+      }
+    };
+
+    window.togglePauseAccount = async function(name, paused) {
+      try {
+        showToast(paused ? `正在暂停 ${name}...` : `正在恢复 ${name}...`);
+        await callMyGo('GatewayService.PauseProfile', name, paused);
+        showToast(paused ? `已暂停 ${name}` : `已恢复 ${name}`);
+        setTimeout(loadData, 200);
+      } catch (e) {
+        showToast('操作失败: ' + (e.message || e));
+      }
+    };
+
+    window.onlyAccount = async function(name) {
+      try {
+        showToast(`正在锁定单账号 ${name}...`);
+        await callMyGo('GatewayService.OnlyProfile', name);
+        showToast(`🔒 已只用 ${name}`);
+        setTimeout(loadData, 200);
+      } catch (e) {
+        showToast('锁定失败: ' + (e.message || e));
+      }
+    };
+
+    window.resumeAllAccounts = async function() {
+      try {
+        await callMyGo('GatewayService.ResumeAllProfiles');
+        showToast('🔓 已恢复全部账号');
+        setTimeout(loadData, 200);
+      } catch (e) {
+        showToast('恢复失败: ' + (e.message || e));
+      }
+    };
+
+    // Button event listeners
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      loadData();
+      showToast('已刷新数据');
+    });
+
+    document.getElementById('btnOpenMain').addEventListener('click', async () => {
+      await callMyGo('GatewayService.OpenMainWindow');
+    });
+
+    document.getElementById('btnFootOpenMain').addEventListener('click', async () => {
+      await callMyGo('GatewayService.OpenMainWindow');
+    });
+
+    document.getElementById('btnFootRestart').addEventListener('click', async () => {
+      showToast('正在平滑重启网关...');
+      await callMyGo('GatewayService.RestartGateway', false);
+      showToast('网关已平滑重启');
+    });
+
+    document.getElementById('btnFootQuit').addEventListener('click', async () => {
+      await callMyGo('GatewayService.QuitApp');
+    });
+
+    // Auto load on open + interval 3s polling
+    loadData();
+    setInterval(loadData, 3000);
+  </script>
+</body>
+</html>
