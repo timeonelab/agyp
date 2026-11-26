@@ -35,14 +35,18 @@ func profileColorForName(name string) string {
 // calculateCycleStart determines the 00:00:00 local time start of the 7-day weekly cycle given a resetTime.
 // If resetTime is zero/invalid, it falls back to Saturday-aligned cycle.
 func calculateCycleStart(resetTime, now time.Time) time.Time {
-	nowLocal := now.Local()
-	todayMidnight := time.Date(nowLocal.Year(), nowLocal.Month(), nowLocal.Day(), 0, 0, 0, 0, nowLocal.Location())
+	loc := now.Location()
+	if loc == nil {
+		loc = time.Local
+	}
+	nowLocal := now.In(loc)
+	todayMidnight := time.Date(nowLocal.Year(), nowLocal.Month(), nowLocal.Day(), 0, 0, 0, 0, loc)
 	if resetTime.IsZero() {
 		daysSinceSat := (int(nowLocal.Weekday()) + 1) % 7
 		return todayMidnight.AddDate(0, 0, -daysSinceSat)
 	}
 
-	t := resetTime.Local()
+	t := resetTime.In(loc)
 
 	// If resetTime is in the past (quota already passed reset timestamp but cache hasn't refreshed),
 	// roll forward by 7 days until it represents the upcoming reset time.
